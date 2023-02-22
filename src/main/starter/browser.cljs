@@ -1,27 +1,16 @@
 (ns starter.browser
-  (:require
-   ;; Require various functions and macros from kushi.core
-   [kushi.core :refer [sx
-                       inject!
-                       inject-stylesheet
-                       add-font-face
-                       add-system-font-stack
-                       defkeyframes
-                       add-google-font!]]
-
-   ;; Require your apps shared classes and component namespaces
-   [starter.badges :as badges]
-   [starter.shared-styles]
-
-   ;; This example uses reagent
-   [reagent.dom :as rdom]))
-
-
-
+  (:require ["react-dom/client" :as rdom]
+            [helix.core :refer [$ defnc]]
+            [helix.dom :as d]
+            [kushi.core :refer [add-font-face add-google-font!
+                                add-system-font-stack defkeyframes inject! inject-stylesheet
+                                sx]] ;; Require your apps shared classes and component namespaces
+            [starter.badges :as badges]
+            [starter.shared-styles])
+  (:require-macros [helix.core]))
 
 ;; Injecting Stylesheets
 ;; .............................................................................................
-
 
 ;; Optional.
 ;; Using kushi.core/inject-stylesheet to inject a static css file.
@@ -31,7 +20,6 @@
 ;;   it may be handy to use this during development to inject new stylesheets without restarting your build.
 (inject-stylesheet {:rel "stylesheet"
                     :href "css/my-global-styles.css"})
-
 
 ;; Optional.
 ;; Using kushi.core/inject-stylesheet to load a google font.
@@ -47,14 +35,12 @@
 (inject-stylesheet {:rel "stylesheet"
                     :href "https://fonts.googleapis.com/css2?family=Inter:wght@900&display=swap"})
 
-
 ;; If you want to add Google Fonts, you can also just use `kushi.core/add-google-fonts!`,
 ;; which will abstract the above pattern (3 separate calls) into one call.
 
 (add-google-font! {:family "Inter"
                    :styles {:normal [400 700]
                             :italic [400 700]}})
-
 
 ;;`kushi.core/add-google-font!` accepts any number of args, each one a single map that
 ;; represents a font-family and associated weights & styles. You can as many different
@@ -67,9 +53,6 @@
                    :styles {:normal [100 400]}}
                   {:family "Pacifico"
                    :styles {:normal [400]}})
-
-
-
 
 ;; Adding webfont resources
 ;; .............................................................................................
@@ -85,7 +68,6 @@
                 :font-style "normal"
                 :src ["url(../fonts/FiraCode-Regular.woff)"]})
 
-
 ;; Optional.
 ;; Using kushi.core/add-system-font-stack macro to add a system font stack.
 ;; The example below would write a total of 4 `@font-face` rules to your
@@ -99,10 +81,6 @@
 
 (add-system-font-stack)
 
-
-
-
-
 ;; Defining animation keyframes
 ;; .............................................................................................
 
@@ -114,9 +92,6 @@
 (defkeyframes x-axis-spinner
   [:0% {:transform "rotateX(0deg)"}]
   [:100% {:transform "rotateX(360deg)"}])
-
-
-
 
 ;; Styling component elements with sx
 ;; .............................................................................................
@@ -136,9 +111,6 @@
 
 ;; Using a build hook for the :compile-finish stage (or similar), your css is written to a static file.
 
-
-
-
 ;; SOME NOTES ON SYNTAX:
 
 ;; You can passed a quoted symbol as the first arg to defclass if you want to give the generated
@@ -153,7 +125,6 @@
 ;; You can apply classes conditionally like so:
 ;; (when my-binding :.my-class)
 ;; (if my-binding :.my-class :.my-other-class)
-
 
 ;; A keyword containing "--" represents a css prop and value pair (split on the "--").
 
@@ -172,20 +143,17 @@
 ;; A partial list of these is available here:
 ;; https://github.com/kushidesign/kushi#syntax
 
-
 ;; Standard CSS shorthand-values are written like this:
 ;;
 ;;     :b--1px:solid:#efefef
 ;;
 ;; The above is equivalent to `border: 1px solid #efefef`
 
-
 ;; CSS list-like values are written like this:
 ;;
 ;;     :ff--FiraCodeRegular|monospace|sans-serif
 ;;
 ;; The above is equivalent to `font-family: FiraCodeRegular, monospace, sans-serif`
-
 
 ;; Media queries, pseudo-classes, pseudo-elements, and combo selectors can be used like this:
 ;;
@@ -194,11 +162,9 @@
 ;;         :>a:hover:c--gold
 ;;         :_a:hover:c--gold)
 
-
 ;;     In the example below, because "(" and ")" chars are not valid in keywords,
 ;;     the 2-element tuple syntax is required, with the prop being expressed as a string:
 ;;     (sx ["nth:child(2):c" :red])
-
 
 ;; You can use runtime variable values with the same tuple syntax.
 ;;     (sx [:c mycolor])
@@ -206,10 +172,8 @@
 ;;     You could also write this as:
 ;;     (sx {:style {:color mycolor})
 
-
 ;; You can use conditional logic to apply different values base on runtime variables.
 ;;     (sx [:c (if danger? :red :green)])
-
 
 ;; The tuple syntax is also necessary for css functions and string values.
 ;;
@@ -221,8 +185,6 @@
 ;;     (sx [:before:content "\"*\""])
 ;;     (sx {:style {:before:content "\"*\""}})
 
-
-
 ;; Now, some working code...
 
 ;; First, we define a subcomponent for the banner headline "layers"
@@ -233,16 +195,15 @@
 
 (defn headline-layer
   [color duration]
-  [:div
-   (sx
-    'headline-layer
-    :.headline
-    :.twirl
-    :animation-name--x-axis-spinner
-    [:animation-duration duration]
-    [:color color])
-   "Kushi"])
-
+  (d/div
+   {:style {:color color
+            :animation-duration duration}
+    :& (dissoc (sx 'headline-layer
+                   :.headline
+                   :.twirl
+                   :animation-name--x-axis-spinner)
+               :style)}
+   "Kushi"))
 
 ;; Next, we define a subcomponent for the sub-header
 ;; This example component demonstrates the following:
@@ -254,61 +215,59 @@
 ;; 5) Passing and attributes map (optional last arg to sx)
 
 (defn twirling-subheader [s]
-  [:div
-   (sx
-      'kqs-twirling-subheader-wrapper
-      :.twirl
-      :.relative
-      :ta--center
-      :ff--FiraCodeRegular|monospace|sans-serif
-      :fs--12px
-      :sm:fs--14px
-      :fw--800
-      :c--white
-      {:on-click #(prn "clicked!")})
-   s])
-
+  (d/div
+   {:& (sx 'kqs-twirling-subheader-wrapper
+           :.twirl
+           :.relative
+           :ta--center
+           :ff--FiraCodeRegular|monospace|sans-serif
+           :fs--12px
+           :sm:fs--14px
+           :fw--800
+           :c--white
+           {:on-click #(prn "clicked!")})}
+   s))
 
 ;; Main component.
-(defn main-view []
-  [:div
-   (sx 'main-app-wrapper
-       :ff--sys)
-   [:div
-    (sx :.flex-col-c
-        :.absolute-fill
-        :h--100%
-        :ai--c
-        :bgc--black)
+(defnc main-view []
+  (d/div
+   {:& (sx 'main-app-wrapper
+           :ff--sys)}
+   (d/div
+    {:& (sx :.flex-col-c
+            :.absolute-fill
+            :h--100%
+            :ai--c
+            :bgc--black)}
 
     ;; In this div we are using both tokenized keywords and a the 2-element tuple syntax.
-    [:div
-     (sx 'hero-wrapper
-         :.flex-col-sb
-         :ai--c
-         :w--100%
-         :h--200px
-         :sm:h--375px
-         :md:h--500px
-         [:transform "translateY(calc(-100vh / 33))"])
+    (d/div
+     {:& (sx 'hero-wrapper
+             :.flex-col-sb
+             :ai--c
+             :w--100%
+             :h--200px
+             :sm:h--375px
+             :md:h--500px
+             [:transform "translateY(calc(-100vh / 33))"])}
 
      ;; The color design tokens below are defined globally in the theme.cljc file,
      ;; which is specified in the :theme entry in your kushi.edn config file.
-     [:div
-      [headline-layer "var(--howlite-blue)" :12s]
-      [headline-layer "var(--canary-yellow)" :3s]
-      [headline-layer  "var(--deep-fuscsia)" :6s]]
-     [twirling-subheader "kushi × shadow-cljs quickstart"]]]
-   [badges/links]])
-
+     (d/div
+      (headline-layer "var(--howlite-blue)" :12s)
+      (headline-layer "var(--canary-yellow)" :3s)
+      (headline-layer "var(--deep-fuscsia)" :6s))
+     (twirling-subheader "kushi × shadow-cljs quickstart")))
+   (badges/links)))
 
 ;; Below is boilerplate code from https://github.com/shadow-cljs/quickstart-browser
 
 ;; start is called by init and after code reloading finishes
 (defn ^:dev/after-load start []
-  (rdom/render [main-view] (.getElementById js/document "app")))
+  (doto (rdom/createRoot (js/document.getElementById "app"))
+    (.render ($ main-view))))
 
-(defn init []
+(defn ^:export init []
   ;; init is called ONCE when the page loads
   ;; this is called in the index.html and must be exported
   ;; so it is available even in :advanced release builds
@@ -316,7 +275,6 @@
 
 ;; this is called before any code is reloaded
 (defn ^:dev/before-load stop [])
-
 
 ;; This will inject the same stylesheet that kushi writes to disk into your browser, during development builds.
 ;; You may not need or want to do this but if you are experiencing visual jankiness on reloads when devving, this can help.

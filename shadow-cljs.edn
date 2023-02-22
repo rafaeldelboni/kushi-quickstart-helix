@@ -5,7 +5,8 @@
   "src/test"]
 
  :dependencies
- [[reagent "1.1.1"]
+ [[lilactown/helix "0.1.9"]
+
   [binaryage/devtools "1.0.6"]
   ;; Add Kushi dependency
   [design.kushi/kushi "1.0.0-a.17"]]
